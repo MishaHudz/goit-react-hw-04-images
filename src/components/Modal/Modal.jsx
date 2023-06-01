@@ -1,38 +1,36 @@
 import PropTypes from 'prop-types';
-import { Component } from 'react';
+import { useEffect } from 'react';
 import style from './Modal.module.css';
 
-export class Modal extends Component {
-  componentDidMount() {
-    document.addEventListener('keydown', this.handlePressEscape);
-  }
+export function Modal({ hideBigImg, bigPoster }) {
+  useEffect(() => {
+    document.addEventListener('keydown', handlePressEscape);
 
-  componentWillUnmount() {
-    document.removeEventListener('keydown', this.handlePressEscape);
-  }
+    return () => {
+      document.removeEventListener('keydown', handlePressEscape);
+    };
+  }, []);
 
-  handlePressEscape = evt => {
+  const handlePressEscape = evt => {
     if (evt.code !== 'Escape') return;
-    this.props.hideBigImg();
+    hideBigImg();
   };
 
-  handleBackdrop = evt => {
+  const handleBackdrop = evt => {
     if (evt.currentTarget === evt.target) {
-      this.props.hideBigImg();
+      hideBigImg();
     }
   };
 
-  render() {
-    return (
-      <>
-        <div className={style.overlay} onClick={this.handleBackdrop}>
-          <div className={style.modal}>
-            <img src={this.props.bigPoster} alt="" />
-          </div>
+  return (
+    <>
+      <div className={style.overlay} onClick={handleBackdrop}>
+        <div className={style.modal}>
+          <img src={bigPoster} alt="" />
         </div>
-      </>
-    );
-  }
+      </div>
+    </>
+  );
 }
 
 Modal.propTypes = {

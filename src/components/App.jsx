@@ -1,5 +1,5 @@
 import { ToastContainer, toast } from 'react-toastify';
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 import { fetchImages } from 'services/images-api';
 
 import { ImageGallery } from './ImageGallery/ImageGallery';
@@ -8,35 +8,31 @@ import { ButtonLoadMore } from 'components/Button/Button';
 import { Loader } from './Loader/Loader';
 import { Modal } from './Modal/Modal';
 
-export class App extends Component {
-  state = {
-    imageList: [],
-    filter: '',
-    page: 1,
-    loading: false,
-    totalHits: 0,
-    image: '',
-  };
+export function App() {
+  const [imageList, setImageList] = useState([]);
+  const [filter, setFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [totalHits, setTotalHits] = useState(0);
+  const [image, setImage] = useState('');
 
-  componentDidUpdate(_, prevState) {
-    const { filter, page } = this.state;
+  useEffect(() => {
+    if (!filter) return;
 
-    if (prevState.filter !== filter || prevState.page !== page) {
-      this.setState({ loading: true });
-      this.getImages(page, filter);
-    }
-  }
+    setLoading(true);
+    getImages(page, filter);
+  }, [filter, page]);
 
-  getImages = async (page, inputedString) => {
+  const getImages = async (page, inputedString) => {
     const {
       data: { hits, totalHits },
     } = await fetchImages(inputedString, page);
-    this.setState({ loading: false });
-    this.setState(prev => ({
-      totalHits,
-      imageList:
-        prev.imageList.length !== 0 ? [...prev.imageList, ...hits] : hits,
-    }));
+    setLoading(false);
+
+    setTotalHits(totalHits);
+    setImageList(prevImages =>
+      prevImages.length !== 0 ? [...prevImages, ...hits] : hits
+    );
 
     if (totalHits === 0) {
       toast.error('Nothing found');
@@ -47,43 +43,42 @@ export class App extends Component {
     }
   };
 
-  changePage = () => {
-    this.setState(prev => ({ page: prev.page + 1 }));
+  const changePage = () => {
+    setPage(prevPage => prevPage + 1);
   };
 
-  formSubmit = inputedString => {
-    if (this.state.filter === inputedString) return;
-    this.setState({ filter: inputedString, page: 1, imageList: [] });
+  const formSubmit = inputedString => {
+    if (filter === inputedString) return;
+
+    setFilter(inputedString);
+    setPage(1);
+    setImageList([]);
   };
 
-  showBigImg = bigImg => {
-    this.setState({ image: bigImg });
+  const showBigImg = bigImg => {
+    setImage(bigImg);
   };
 
-  hideBigImg = () => {
-    this.setState({ image: '' });
+  const hideBigImg = () => {
+    setImage('');
   };
 
-  render() {
-    const { imageList, loading, page, totalHits, image } = this.state;
+  return (
+    <>
+      <Searchbar formSubmit={formSubmit} />
+      {imageList.length > 0 && (
+        <ImageGallery imageList={imageList} showBigImg={showBigImg} />
+      )}
 
-    return (
-      <>
-        <Searchbar formSubmit={this.formSubmit} />
-        {imageList.length > 0 && (
-          <ImageGallery imageList={imageList} showBigImg={this.showBigImg} />
-        )}
+      {loading && <Loader />}
 
-        {loading && <Loader />}
+      {imageList.length > 0 && totalHits > page * 12 && (
+        <ButtonLoadMore changePage={changePage} />
+      )}
 
-        {imageList.length > 0 && totalHits > page * 12 && (
-          <ButtonLoadMore changePage={this.changePage} />
-        )}
-
-        {}
-        {image && <Modal bigPoster={image} hideBigImg={this.hideBigImg} />}
-        <ToastContainer autoClose={3000} />
-      </>
-    );
-  }
+      {}
+      {image && <Modal bigPoster={image} hideBigImg={hideBigImg} />}
+      <ToastContainer autoClose={3000} />
+    </>
+  );
 }
