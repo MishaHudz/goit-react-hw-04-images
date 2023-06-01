@@ -5,14 +5,14 @@ import style from './Modal.module.css';
 export function Modal({ hideBigImg, bigPoster }) {
   useEffect(() => {
     document.addEventListener('keydown', handlePressEscape);
-
     return () => {
       document.removeEventListener('keydown', handlePressEscape);
     };
-  }, []);
+  });
 
   const handlePressEscape = evt => {
     if (evt.code !== 'Escape') return;
+
     hideBigImg();
   };
 
